@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  pdf-tools:
+    build: .
+    container_name: ilovepdf-tools
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    working_dir: /app
+    command: tail -f /dev/null
+
+  api:
+    build: .
+    container_name: ilovepdf-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    working_dir: /app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - pdf-tools
+
