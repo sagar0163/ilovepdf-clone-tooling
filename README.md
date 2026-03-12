@@ -212,3 +212,4 @@ This project is licensed under the MIT License.
 - [pdf2docx](https://github.com/dothinking/pdf2docx) - PDF to Word converter
 - [ReportLab](https://www.reportlab.com/) - PDF generation toolkit
 - [Pillow](https://python-pillow.org/) - Python Imaging Library
+# Updated
