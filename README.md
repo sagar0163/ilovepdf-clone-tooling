@@ -213,3 +213,4 @@ This project is licensed under the MIT License.
 - [ReportLab](https://www.reportlab.com/) - PDF generation toolkit
 - [Pillow](https://python-pillow.org/) - Python Imaging Library
 # Updated
+# Update
