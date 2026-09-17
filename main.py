@@ -50,19 +50,18 @@ async def health():
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _save_upload(file, dest_dir):
+    try:
+        return str(file_ops.save_upload(file.filename, file.file, dest_dir))
+    finally:
+        try:
+            file.file.close()
+        except OSError:
+            pass
+
 def _flush_uploads(files, dest_dir):
     """Persist uploads to ``dest_dir`` under sanitized per-request names."""
-    paths = []
-    try:
-        for f in files:
-            paths.append(str(file_ops.save_upload(f.filename, f.file, dest_dir)))
-    finally:
-        for f in files:
-            try:
-                f.file.close()
-            except OSError:
-                pass
-    return paths
+    return [_save_upload(f, dest_dir) for f in files]
 
 
 def _handle(background_tasks, upload_dir, output_dir, on_success):
@@ -77,10 +76,12 @@ def _handle(background_tasks, upload_dir, output_dir, on_success):
         file_ops.cleanup_path(upload_dir)
         file_ops.cleanup_path(output_dir)
         raise
-    except Exception:
+    except Exception as e:
         file_ops.cleanup_path(upload_dir)
         file_ops.cleanup_path(output_dir)
-        raise
+        # Convert all other exceptions to 500
+        raise HTTPException(status_code=500, detail=str(e))
+    
     background_tasks.add_task(file_ops.cleanup_path, upload_dir)
     background_tasks.add_task(file_ops.cleanup_path, output_dir)
     return result
@@ -92,18 +93,15 @@ async def _validate_and_check_size(files: list[UploadFile] | UploadFile):
     to_validate = files if isinstance(files, list) else [files]
     for f in to_validate:
         security.validate_pdf_upload(f)
+        f.file.seek(0) # ensure we reset
         data = await f.read()
+        f.file.seek(0)
         if len(data) > limit:
             raise HTTPException(
                 status_code=413,
                 detail=f"File '{f.filename}' exceeds the {limit // (1024 * 1024)} MB upload limit",
             )
-        f.file = io.BytesIO(data)
 
-
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
 
 @app.post("/merge", dependencies=[Depends(security.verify_token)])
 async def merge_pdfs(files: list[UploadFile] = File(...), background_tasks: BackgroundTasks = BackgroundTasks()):
@@ -117,9 +115,7 @@ async def merge_pdfs(files: list[UploadFile] = File(...), background_tasks: Back
 
     def run():
         input_paths = _flush_uploads(files, upload_dir)
-        ok = do_merge(input_paths, str(output_path))
-        if not ok:
-            raise HTTPException(status_code=500, detail="Merge failed")
+        do_merge(input_paths, str(output_path))
         return FileResponse(str(output_path), filename="merged.pdf")
 
     return _handle(background_tasks, upload_dir, output_path.parent, run)
@@ -136,10 +132,8 @@ async def split_pdf(file: UploadFile = File(...), background_tasks: BackgroundTa
     output_dir = file_ops.new_request_dir(OUTPUT_DIR)
 
     def run():
-        input_path = str(file_ops.save_upload(file.filename, file.file, upload_dir))
+        input_path = _save_upload(file, upload_dir)
         result = do_split(input_path, str(output_dir))
-        if not result:
-            raise HTTPException(status_code=500, detail="Split failed")
         return {"message": "PDF split successfully", "output_dir": str(output_dir), "pages": len(result)}
 
     return _handle(background_tasks, upload_dir, output_dir, run)
@@ -160,10 +154,8 @@ async def compress_pdf(
     output_path = file_ops.unique_output_path(OUTPUT_DIR, "compressed.pdf")
 
     def run():
-        input_path = str(file_ops.save_upload(file.filename, file.file, upload_dir))
-        ok = do_compress(input_path, str(output_path), quality=quality)
-        if not ok:
-            raise HTTPException(status_code=500, detail="Compression failed")
+        input_path = _save_upload(file, upload_dir)
+        do_compress(input_path, str(output_path), quality=quality)
         return FileResponse(str(output_path), filename="compressed.pdf")
 
     return _handle(background_tasks, upload_dir, output_path.parent, run)
@@ -185,10 +177,8 @@ async def add_watermark(
     output_path = file_ops.unique_output_path(OUTPUT_DIR, "watermarked.pdf")
 
     def run():
-        input_path = str(file_ops.save_upload(file.filename, file.file, upload_dir))
-        ok = do_watermark(input_path, str(output_path), text=text, opacity=opacity)
-        if not ok:
-            raise HTTPException(status_code=500, detail="Watermark failed")
+        input_path = _save_upload(file, upload_dir)
+        do_watermark(input_path, str(output_path), text=text, opacity=opacity)
         return FileResponse(str(output_path), filename="watermarked.pdf")
 
     return _handle(background_tasks, upload_dir, output_path.parent, run)
