@@ -4,4 +4,4 @@
 - [ ] Replace or remove dead `CMD` in Dockerfile.
 - [x] Add `.dockerignore` ignoring uploads/, output/, .git, __pycache__, *.pdf, .venv, x.
 - [ ] Pin dependencies in `requirements.txt`.
-- [ ] Remove `pdf-tools` sidecar and `version:` from `docker-compose.yml`.
+- [x] Remove `pdf-tools` sidecar and `version:` from `docker-compose.yml`.
