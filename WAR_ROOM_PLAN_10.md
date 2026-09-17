@@ -1,0 +1,5 @@
+- [ ] Collapse `redact.py` to one function.
+- [ ] Create `core.py` with `copy_document(input_path, output_path, transform=None)` raising exceptions instead of returning False.
+- [ ] Refactor `split.py`, `rotate.py`, `protect.py`, `unlock.py`, `metadata_scrubber.py`, `compress.py`, `watermark.py`, `sign.py` to use `core.py`.
+- [ ] Extract `_save_upload()` in `main.py` used by all endpoints. Update endpoints in `main.py` to handle exceptions and return 4xx/5xx properly.
+- [ ] Make `progress_bar.py` wrap `core.py` operations.
