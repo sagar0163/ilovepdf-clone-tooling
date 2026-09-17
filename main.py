@@ -1,25 +1,35 @@
 """FastAPI Wrapper - REST API for PDF Tools"""
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTasks, Depends
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-import os
-import shutil
+import logging
+import io
 from pathlib import Path
 
 import file_ops
+import security
+
+logger = logging.getLogger("uvicorn.error")
 
 app = FastAPI(title="iLovePDF API", description="REST API for PDF manipulation tools")
 
-# Enable CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# ---------------------------------------------------------------------------
+# CORS — safe by default (no wildcard, no credentials + *)
+# ---------------------------------------------------------------------------
+app.add_middleware(CORSMiddleware, **security.get_cors_kwargs())
 
+# ---------------------------------------------------------------------------
+# Auth warning
+# ---------------------------------------------------------------------------
+if security.auth_enabled() is False:
+    logger.warning(
+        "API_TOKEN not set — authentication is OFF. "
+        "Any client can call protected endpoints."
+    )
+
+# ---------------------------------------------------------------------------
 # Create temp directories
+# ---------------------------------------------------------------------------
 UPLOAD_DIR = Path("uploads")
 OUTPUT_DIR = Path("output")
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -35,6 +45,10 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def _flush_uploads(files, dest_dir):
     """Persist uploads to ``dest_dir`` under sanitized per-request names."""
@@ -52,11 +66,7 @@ def _flush_uploads(files, dest_dir):
 
 
 def _handle(background_tasks, upload_dir, output_dir, on_success):
-    """Run ``on_success`` with request-scoped dirs; clean up in all outcomes.
-
-    On success the cleanup is deferred to ``background_tasks`` so it runs after
-    the response is sent; on failure the temp dirs are removed immediately.
-    """
+    """Run ``on_success`` with request-scoped dirs; clean up in all outcomes."""
     try:
         result = on_success()
     except ValueError as e:
@@ -76,10 +86,31 @@ def _handle(background_tasks, upload_dir, output_dir, on_success):
     return result
 
 
-@app.post("/merge")
+async def _validate_and_check_size(files: list[UploadFile] | UploadFile):
+    """Validate PDF content and enforce per-file size cap."""
+    limit = security.get_max_upload_bytes()
+    to_validate = files if isinstance(files, list) else [files]
+    for f in to_validate:
+        security.validate_pdf_upload(f)
+        data = await f.read()
+        if len(data) > limit:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File '{f.filename}' exceeds the {limit // (1024 * 1024)} MB upload limit",
+            )
+        f.file = io.BytesIO(data)
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/merge", dependencies=[Depends(security.verify_token)])
 async def merge_pdfs(files: list[UploadFile] = File(...), background_tasks: BackgroundTasks = BackgroundTasks()):
     """Merge multiple PDFs into one."""
     from merge import merge_pdfs as do_merge
+
+    await _validate_and_check_size(files)
 
     upload_dir = file_ops.new_request_dir(UPLOAD_DIR)
     output_path = file_ops.unique_output_path(OUTPUT_DIR, "merged.pdf")
@@ -94,10 +125,12 @@ async def merge_pdfs(files: list[UploadFile] = File(...), background_tasks: Back
     return _handle(background_tasks, upload_dir, output_path.parent, run)
 
 
-@app.post("/split")
+@app.post("/split", dependencies=[Depends(security.verify_token)])
 async def split_pdf(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks()):
     """Split PDF into pages."""
     from split import split_pdf as do_split
+
+    await _validate_and_check_size(file)
 
     upload_dir = file_ops.new_request_dir(UPLOAD_DIR)
     output_dir = file_ops.new_request_dir(OUTPUT_DIR)
@@ -112,7 +145,7 @@ async def split_pdf(file: UploadFile = File(...), background_tasks: BackgroundTa
     return _handle(background_tasks, upload_dir, output_dir, run)
 
 
-@app.post("/compress")
+@app.post("/compress", dependencies=[Depends(security.verify_token)])
 async def compress_pdf(
     file: UploadFile = File(...),
     quality: str = Form("medium"),
@@ -120,6 +153,8 @@ async def compress_pdf(
 ):
     """Compress PDF."""
     from compress import compress_pdf as do_compress
+
+    await _validate_and_check_size(file)
 
     upload_dir = file_ops.new_request_dir(UPLOAD_DIR)
     output_path = file_ops.unique_output_path(OUTPUT_DIR, "compressed.pdf")
@@ -134,7 +169,7 @@ async def compress_pdf(
     return _handle(background_tasks, upload_dir, output_path.parent, run)
 
 
-@app.post("/watermark")
+@app.post("/watermark", dependencies=[Depends(security.verify_token)])
 async def add_watermark(
     file: UploadFile = File(...),
     text: str = Form(None),
@@ -143,6 +178,8 @@ async def add_watermark(
 ):
     """Add watermark to PDF."""
     from watermark import add_watermark as do_watermark
+
+    await _validate_and_check_size(file)
 
     upload_dir = file_ops.new_request_dir(UPLOAD_DIR)
     output_path = file_ops.unique_output_path(OUTPUT_DIR, "watermarked.pdf")
@@ -159,4 +196,4 @@ async def add_watermark(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=security.get_host(), port=security.get_port())
