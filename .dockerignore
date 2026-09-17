@@ -1,0 +1,7 @@
+uploads/
+output/
+.git
+__pycache__
+*.pdf
+.venv
+x
