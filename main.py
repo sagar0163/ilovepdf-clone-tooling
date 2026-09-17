@@ -3,7 +3,6 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTa
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-import os
 import io
 from pathlib import Path
 

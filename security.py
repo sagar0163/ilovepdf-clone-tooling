@@ -18,7 +18,7 @@ import os
 import secrets
 from typing import Optional
 
-from fastapi import Depends, Header, HTTPException, Request, UploadFile
+from fastapi import Header, HTTPException, UploadFile
 
 logger = logging.getLogger("security")
 
