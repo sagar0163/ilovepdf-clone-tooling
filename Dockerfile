@@ -26,11 +26,16 @@ RUN pip install --no-cache-dir \
 # Copy application files
 COPY . .
 
-# Create output directory
-RUN mkdir -p /app/output
+# Create output directory and uploads dir
+RUN mkdir -p /app/output /app/uploads
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
+
+# Run as non-root (root amplifies any write primitive inside the container)
+RUN useradd -m -u 1000 appuser \
+    && chown -R appuser:appuser /app/uploads /app/output
+USER appuser
 
 # Default command
 CMD ["python", "--help"]
