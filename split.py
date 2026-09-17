@@ -2,19 +2,11 @@
 
 from core import _split_pdf
 
-def split_pdf(input_file, output_dir):
+def split_pdf(input_file, output_dir, on_progress=None):
     """
     Split a PDF into individual pages.
-    
-    Args:
-        input_file: Path to input PDF
-        output_dir: Directory to save split pages
-    
-    Returns:
-        list: List of output file paths
     """
-    # Simply call the core function; it raises exceptions on failure.
-    paths = _split_pdf(input_file, output_dir)
+    paths = _split_pdf(input_file, output_dir, on_page=on_progress)
     return [str(p) for p in paths]
 
 if __name__ == "__main__":

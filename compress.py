@@ -2,7 +2,7 @@
 
 from core import _copy_pdf
 
-def compress_pdf(input_path, output_path, quality="medium"):
+def compress_pdf(input_path, output_path, quality="medium", on_progress=None):
     """
     Compress PDF to reduce file size.
     """
@@ -14,9 +14,10 @@ def compress_pdf(input_path, output_path, quality="medium"):
     
     compression_level = quality_settings.get(quality, 0.5)
     def writer_transform(writer):
-        writer.compress_content_streams(level=compression_level)
+        if hasattr(writer, 'compress_content_streams'):
+            writer.compress_content_streams(level=compression_level)
 
-    out = _copy_pdf(input_path, output_path, writer_transform=writer_transform)
+    out = _copy_pdf(input_path, output_path, writer_transform=writer_transform, on_page=on_progress)
     return str(out)
 
 if __name__ == "__main__":
