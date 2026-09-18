@@ -1,5 +1,0 @@
-- [x] Fix test module imports and mocks for `ilovepdf` package (test_security.py, test_security_issue8.py)
-- [x] Ensure `cli.py` works and handles `merge`, `split`, `compress` and `--help`
-- [x] Wire progress callback in CLI
-- [x] Handle circuit-breakers via CLI, exit non-zero on failure
-- [ ] Update README with Quick Start (CLI) and verify feature table
