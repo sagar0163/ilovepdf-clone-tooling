@@ -146,3 +146,16 @@ def _lower_ext(filename: str) -> str:
     if idx == -1:
         return ""
     return filename[idx:].lower()
+
+def validate_pdf_path(path_str: str) -> None:
+    """Validate a local PDF file path, raising ValueError on failure.
+    Uses the same checks as validate_pdf_upload.
+    """
+    ext = _lower_ext(path_str)
+    if ext not in PDF_EXTENSIONS:
+        raise ValueError(f"Rejected: file extension '{ext}' is not a PDF")
+
+    with open(path_str, "rb") as f:
+        head = f.read(8)
+    if not head.startswith(PDF_MAGIC):
+        raise ValueError("Rejected: uploaded file does not start with %PDF- magic bytes")

@@ -1,6 +1,7 @@
 import argparse
 import sys
 from ilovepdf.progress_bar import merge_with_progress, split_with_progress, compress_with_progress
+from ilovepdf.security import validate_pdf_path
 
 def main():
     parser = argparse.ArgumentParser(description="CLI tool for PDF manipulation")
@@ -33,24 +34,20 @@ def main():
 
     try:
         if args.command == "merge":
-            success = merge_with_progress(args.input_files, args.output_path)
-            if not success:
-                print("Error: Merge operation failed.", file=sys.stderr)
-                sys.exit(1)
+            for f in args.input_files:
+                validate_pdf_path(f)
+            merge_with_progress(args.input_files, args.output_path)
+            print(f"Successfully merged into {args.output_path}")
         elif args.command == "split":
+            validate_pdf_path(args.input_file)
             res = split_with_progress(args.input_file, args.output_dir)
-            if not res:
-                print("Error: Split operation failed.", file=sys.stderr)
-                sys.exit(1)
-            else:
-                print(f"Successfully split into {len(res)} pages in {args.output_dir}")
+            print(f"Successfully split into {len(res)} pages in {args.output_dir}")
         elif args.command == "compress":
-            success = compress_with_progress(args.input_file, args.output_path, quality=args.quality)
-            if not success:
-                print("Error: Compress operation failed.", file=sys.stderr)
-                sys.exit(1)
+            validate_pdf_path(args.input_file)
+            compress_with_progress(args.input_file, args.output_path, quality=args.quality)
+            print(f"Successfully compressed into {args.output_path}")
     except Exception as e:
-        print(f"Command failed: {e}", file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 if __name__ == "__main__":
