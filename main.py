@@ -145,7 +145,12 @@ async def compress_pdf(
     quality: str = Form("medium"),
     background_tasks: BackgroundTasks = BackgroundTasks()
 ):
-    """Compress PDF."""
+    """
+    Compress PDF.
+    Uses real image re-encoding and downsampling (via Ghostscript).
+    Highly effective for scanned or image-heavy PDFs. 
+    May yield minimal reduction for text-only PDFs.
+    """
     from compress import compress_pdf as do_compress
 
     await _validate_and_check_size(file)
