@@ -1,24 +1,47 @@
 """PDF Compressor Module - Reduce PDF file size"""
 
-from core import _copy_pdf
+import subprocess
+from pathlib import Path
 
 def compress_pdf(input_path, output_path, quality="medium", on_progress=None):
     """
     Compress PDF to reduce file size.
     """
     quality_settings = {
-        "low": 0.3,
-        "medium": 0.5,
-        "high": 0.75
+        "low": "/screen",      # lowest quality, smallest file
+        "medium": "/ebook",    # medium quality
+        "high": "/printer"     # high quality, larger file
     }
     
-    compression_level = quality_settings.get(quality, 0.5)
-    def writer_transform(writer):
-        if hasattr(writer, 'compress_content_streams'):
-            writer.compress_content_streams(level=compression_level)
+    gs_quality = quality_settings.get(quality, "/ebook")
+    
+    input_path = str(Path(input_path).absolute())
+    output_path = str(Path(output_path).absolute())
+    
+    cmd = [
+        "gs",
+        "-sDEVICE=pdfwrite",
+        "-dCompatibilityLevel=1.4",
+        f"-dPDFSETTINGS={gs_quality}",
+        "-dNOPAUSE",
+        "-dQUIET",
+        "-dBATCH",
+        f"-sOutputFile={output_path}",
+        input_path
+    ]
+    
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+        # Note: on_progress cannot be accurately reported since gs does not provide page-by-page progress in quiet mode.
+        # But we must support the signature.
+        if on_progress:
+            # We just mock progress at the end if we have no way to poll it,
+            # or we could parse gs output if we removed -dQUIET, but a simple 100% is often fine for a subprocess.
+            on_progress(1, 1)
+        return str(output_path)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Ghostscript compression failed: {e.stderr.decode()}")
 
-    out = _copy_pdf(input_path, output_path, writer_transform=writer_transform, on_page=on_progress)
-    return str(out)
 
 if __name__ == "__main__":
     try:
