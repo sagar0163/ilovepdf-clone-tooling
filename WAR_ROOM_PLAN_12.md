@@ -1,5 +1,5 @@
 - [x] Refactor modules into `src/ilovepdf` directory layout
 - [x] Add `pyproject.toml`
-- [ ] Add `cli.py` to `src/ilovepdf` using argparse
-- [ ] Update README.md with CLI Quick start
-- [ ] Test `pip install -e .` and CLI functionality
+- [x] Add `cli.py` to `src/ilovepdf` using argparse
+- [x] Update README.md with CLI Quick start
+- [x] Test `pip install -e .` and CLI functionality
