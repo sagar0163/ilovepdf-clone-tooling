@@ -1,0 +1,3 @@
+- [ ] Update `compress.py` to use `gs` for real PDF compression
+- [ ] Add tests for `compress_pdf` with an image-heavy PDF
+- [ ] Ensure `compress_pdf` signature remains identical (including `on_progress`)
