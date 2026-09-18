@@ -8,8 +8,8 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 
-import main
-import security
+from ilovepdf import main, compress, split, watermark, merge
+from ilovepdf import security
 
 SIMPLE_PDF = b"%PDF-1.4 fake content for issue-8 tests, not a real PDF"
 NOT_PDF = b"username\npassword\n"
@@ -130,7 +130,7 @@ def test_valid_token_passes_to_parser(monkeypatch):
         Path(output_path).write_bytes(SIMPLE_PDF)
         return True
 
-    with mock.patch("compress.compress_pdf", side_effect=fake_compress):
+    with mock.patch("ilovepdf.compress.compress_pdf", side_effect=fake_compress):
         resp = _client().post(
             "/compress",
             files=[("file", ("doc.pdf", io.BytesIO(SIMPLE_PDF), "application/pdf"))],
@@ -142,7 +142,7 @@ def test_valid_token_passes_to_parser(monkeypatch):
 
 def test_auth_401_happens_before_parser_runs(monkeypatch):
     monkeypatch.setenv("API_TOKEN", "sekret")
-    with mock.patch("merge.merge_pdfs") as m:
+    with mock.patch("ilovepdf.merge.merge_pdfs") as m:
         resp = _client().post(
             "/merge",
             files=[("files", ("doc.pdf", io.BytesIO(SIMPLE_PDF), "application/pdf"))],
@@ -158,7 +158,7 @@ def test_auth_401_happens_before_parser_runs(monkeypatch):
 def test_upload_over_size_cap_rejected_413(monkeypatch):
     monkeypatch.setenv("API_TOKEN", "sekret")
     monkeypatch.setenv("MAX_UPLOAD_MB", "0")
-    with mock.patch("compress.compress_pdf") as m:
+    with mock.patch("ilovepdf.compress.compress_pdf") as m:
         resp = _client().post(
             "/compress",
             files=[("file", ("doc.pdf", io.BytesIO(SIMPLE_PDF), "application/pdf"))],
@@ -178,9 +178,9 @@ def test_upload_size_cap_default_100mb():
 
 @pytest.mark.parametrize("endpoint", ["/split", "/compress", "/watermark"])
 def test_non_pdf_magic_rejected_before_parser(monkeypatch, endpoint):
-    with mock.patch("compress.compress_pdf") as comp_m, mock.patch(
-        "split.split_pdf"
-    ) as split_m, mock.patch("watermark.add_watermark") as wm_m:
+    with mock.patch("ilovepdf.compress.compress_pdf") as comp_m, mock.patch(
+        "ilovepdf.split.split_pdf"
+    ) as split_m, mock.patch("ilovepdf.watermark.add_watermark") as wm_m:
         resp = _client().post(
             endpoint,
             files=[("file", ("doc.pdf", io.BytesIO(NOT_PDF), "application/pdf"))],
@@ -190,7 +190,7 @@ def test_non_pdf_magic_rejected_before_parser(monkeypatch, endpoint):
 
 
 def test_non_pdf_extension_rejected(monkeypatch):
-    with mock.patch("split.split_pdf") as m:
+    with mock.patch("ilovepdf.split.split_pdf") as m:
         resp = _client().post(
             "/split",
             files=[("file", ("doc.txt", io.BytesIO(SIMPLE_PDF), "application/pdf"))],
@@ -200,7 +200,7 @@ def test_non_pdf_extension_rejected(monkeypatch):
 
 
 def test_merge_rejects_any_non_pdf_file(monkeypatch):
-    with mock.patch("merge.merge_pdfs") as m:
+    with mock.patch("ilovepdf.merge.merge_pdfs") as m:
         resp = _client().post(
             "/merge",
             files=[

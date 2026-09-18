@@ -6,8 +6,8 @@ import logging
 import io
 from pathlib import Path
 
-import file_ops
-import security
+from ilovepdf import file_ops
+from ilovepdf import security
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -106,7 +106,7 @@ async def _validate_and_check_size(files: list[UploadFile] | UploadFile):
 @app.post("/merge", dependencies=[Depends(security.verify_token)])
 async def merge_pdfs(files: list[UploadFile] = File(...), background_tasks: BackgroundTasks = BackgroundTasks()):
     """Merge multiple PDFs into one."""
-    from merge import merge_pdfs as do_merge
+    from ilovepdf.merge import merge_pdfs as do_merge
 
     await _validate_and_check_size(files)
 
@@ -124,7 +124,7 @@ async def merge_pdfs(files: list[UploadFile] = File(...), background_tasks: Back
 @app.post("/split", dependencies=[Depends(security.verify_token)])
 async def split_pdf(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks()):
     """Split PDF into pages."""
-    from split import split_pdf as do_split
+    from ilovepdf.split import split_pdf as do_split
 
     await _validate_and_check_size(file)
 
@@ -146,7 +146,7 @@ async def compress_pdf(
     background_tasks: BackgroundTasks = BackgroundTasks()
 ):
     """Compress PDF."""
-    from compress import compress_pdf as do_compress
+    from ilovepdf.compress import compress_pdf as do_compress
 
     await _validate_and_check_size(file)
 
@@ -169,7 +169,7 @@ async def add_watermark(
     background_tasks: BackgroundTasks = BackgroundTasks()
 ):
     """Add watermark to PDF."""
-    from watermark import add_watermark as do_watermark
+    from ilovepdf.watermark import add_watermark as do_watermark
 
     await _validate_and_check_size(file)
 

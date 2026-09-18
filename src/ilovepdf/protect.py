@@ -1,6 +1,6 @@
 """PDF Protection Module - Encrypt and protect PDF files"""
 
-from core import _copy_pdf
+from ilovepdf.core import _copy_pdf
 
 def encrypt_pdf(input_path, output_path, password, owner_password=None):
     """

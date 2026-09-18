@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from PyPDF2 import PdfReader
-from core import _copy_pdf
+from ilovepdf.core import _copy_pdf
 
 def sign_pdf(input_path, output_path, cert_path, password=None):
     """

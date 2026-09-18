@@ -1,6 +1,6 @@
 """PDF Unlocker Module - Remove password protection from PDF"""
 
-from core import _copy_pdf
+from ilovepdf.core import _copy_pdf
 
 def unlock_pdf(input_path, output_path, password):
     """

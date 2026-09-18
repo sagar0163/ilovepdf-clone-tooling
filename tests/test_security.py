@@ -8,8 +8,8 @@ import pytest
 from fastapi import UploadFile
 from fastapi.testclient import TestClient
 
-import file_ops
-import main
+from ilovepdf import file_ops
+from ilovepdf import main, compress, split, watermark, merge
 
 TRAVERSAL_NAMES = [
     "../../../tmp/pwned.pdf",
@@ -51,7 +51,7 @@ def test_filename_with_traversal_never_escapes_uploads_dir():
         Path(output_path).write_bytes(SIMPLE_PDF)
         return True
 
-    with mock.patch("merge.merge_pdfs", side_effect=fake_merge):
+    with mock.patch("ilovepdf.merge.merge_pdfs", side_effect=fake_merge):
         resp = _merge_request(_client(), "/../../../tmp/pwned.pdf")
 
     assert resp.status_code == 200
@@ -90,7 +90,7 @@ def test_merge_requests_get_isolated_output_dirs():
         Path(output_path).write_bytes(marker)
         return True
 
-    with mock.patch("merge.merge_pdfs", side_effect=fake_merge):
+    with mock.patch("ilovepdf.merge.merge_pdfs", side_effect=fake_merge):
         client = _client()
         r1 = _merge_request(client, "first.pdf")
         r2 = _merge_request(client, "second.pdf")
@@ -115,7 +115,7 @@ def test_symlink_at_fixed_output_name_cannot_be_overwritten(tmp_path):
         Path(output_path).write_bytes(SIMPLE_PDF)
         return True
 
-    with mock.patch("merge.merge_pdfs", side_effect=fake_merge):
+    with mock.patch("ilovepdf.merge.merge_pdfs", side_effect=fake_merge):
         resp = _merge_request(_client(), "attack.pdf")
 
     assert resp.status_code == 200
@@ -129,7 +129,7 @@ def test_temp_files_removed_after_response():
         Path(output_path).write_bytes(SIMPLE_PDF)
         return True
 
-    with mock.patch("merge.merge_pdfs", side_effect=fake_merge):
+    with mock.patch("ilovepdf.merge.merge_pdfs", side_effect=fake_merge):
         resp = _merge_request(_client(), "cleanup.pdf")
 
     assert resp.status_code == 200
@@ -138,7 +138,7 @@ def test_temp_files_removed_after_response():
 
 
 def test_split_fix_and_per_request_cleanup():
-    with mock.patch("split.split_pdf", return_value=["page_1.pdf", "page_2.pdf"]):
+    with mock.patch("ilovepdf.split.split_pdf", return_value=["page_1.pdf", "page_2.pdf"]):
         resp = _client().post(
             "/split",
             files=[("file", ("report.pdf", io.BytesIO(SIMPLE_PDF), "application/pdf"))],

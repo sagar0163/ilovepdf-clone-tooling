@@ -4,7 +4,7 @@ import io
 from PyPDF2 import PdfReader
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from core import _copy_pdf
+from ilovepdf.core import _copy_pdf
 
 def add_watermark(input_path, output_path, text=None, image_path=None, opacity=0.3):
     """

@@ -1,6 +1,6 @@
 """Metadata Scrubber - Remove hidden metadata from PDFs for privacy"""
 
-from core import _copy_pdf
+from ilovepdf.core import _copy_pdf
 
 def scrub_metadata(input_path, output_path, keep_creator=False):
     """

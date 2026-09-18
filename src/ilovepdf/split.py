@@ -1,6 +1,6 @@
 """PDF Splitter Module - Split PDF into individual pages"""
 
-from core import _split_pdf
+from ilovepdf.core import _split_pdf
 
 def split_pdf(input_file, output_dir, on_progress=None):
     """
