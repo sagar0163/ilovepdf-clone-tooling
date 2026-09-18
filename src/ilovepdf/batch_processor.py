@@ -33,17 +33,17 @@ class PDFProcessor(FileSystemEventHandler):
         
         try:
             if self.action == "compress":
-                from compress import compress_pdf
+                from ilovepdf.compress import compress_pdf
                 compress_pdf(str(input_path), str(output_path))
                 print(f"Compressed: {input_path.name} -> {output_path.name}")
                 
             elif self.action == "watermark":
-                from watermark import add_watermark
+                from ilovepdf.watermark import add_watermark
                 add_watermark(str(input_path), str(output_path), text="BATCH PROCESSED")
                 print(f"Watermarked: {input_path.name} -> {output_path.name}")
                 
             elif self.action == "split":
-                from split import split_pdf
+                from ilovepdf.split import split_pdf
                 split_pdf(str(input_path), str(self.output_dir / "split"))
                 print(f"Split: {input_path.name}")
                 

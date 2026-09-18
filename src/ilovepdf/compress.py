@@ -1,6 +1,6 @@
 """PDF Compressor Module - Reduce PDF file size"""
 
-from core import _copy_pdf
+from ilovepdf.core import _copy_pdf
 
 def compress_pdf(input_path, output_path, quality="medium", on_progress=None):
     """

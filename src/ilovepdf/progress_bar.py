@@ -1,8 +1,8 @@
 """Progress Bar Support - Add tqdm progress bars for CLI"""
 from tqdm import tqdm
-from merge import merge_pdfs
-from split import split_pdf
-from compress import compress_pdf
+from ilovepdf.merge import merge_pdfs
+from ilovepdf.split import split_pdf
+from ilovepdf.compress import compress_pdf
 
 def merge_with_progress(input_files, output_path, show_progress=True):
     if not show_progress:

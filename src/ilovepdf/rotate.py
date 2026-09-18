@@ -1,6 +1,6 @@
 """Page Rotation Tool - Rotate PDF pages by specified angle"""
 
-from core import _copy_pdf
+from ilovepdf.core import _copy_pdf
 
 def rotate_pages(input_path, output_path, angle=90, pages=None):
     """

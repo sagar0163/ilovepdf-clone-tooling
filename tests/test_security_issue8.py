@@ -8,8 +8,8 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 
-import main
-import security
+from ilovepdf import main
+from ilovepdf import security
 
 SIMPLE_PDF = b"%PDF-1.4 fake content for issue-8 tests, not a real PDF"
 NOT_PDF = b"username\npassword\n"

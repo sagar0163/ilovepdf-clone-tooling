@@ -8,8 +8,8 @@ import pytest
 from fastapi import UploadFile
 from fastapi.testclient import TestClient
 
-import file_ops
-import main
+from ilovepdf import file_ops
+from ilovepdf import main
 
 TRAVERSAL_NAMES = [
     "../../../tmp/pwned.pdf",
